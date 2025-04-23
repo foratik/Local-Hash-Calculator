@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>File Hash Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Nunito:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(to bottom right, #a8d8ee, #bfd8ea);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding-top: 60px;
+      color: #333;
+    }
+
+    h1 {
+      color: #004080;
+      margin-bottom: 20px;
+      font-family: 'Roboto', sans-serif;
+      font-weight: 600;
+    }
+
+    .drop-zone {
+      border: 3px dashed #4A90E2;
+      border-radius: 15px;
+      background-color: #f3f9ff;
+      width: 800px;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #4A90E2;
+      font-size: 20px;
+      padding: 30px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .drop-zone:hover {
+      background-color: #dce8f6;
+      transform: scale(1.05);
+    }
+
+    .drop-zone.dragover {
+      background-color: #e1f2ff;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .hash-container {
+      margin: 40px auto 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 500px;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .hash-box {
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 15px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      font-family: 'Roboto', sans-serif;
+      direction: ltr;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      word-wrap: break-word;
+      word-break: break-word;
+      white-space: normal;
+      text-align: left;
+      overflow-wrap: break-word;
+      box-sizing: border-box;
+    }
+
+    .hash-box div {
+      margin-bottom: 12px;
+      font-size: 16px;
+      text-align: left;
+      word-wrap: break-word;
+    }
+
+    .hash-box strong {
+      color: #004080;
+    }
+
+    .button {
+      display: inline-block;
+      background-color: #4A90E2;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-size: 16px;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-bottom: 30px;
+    }
+
+    .button:hover {
+      background-color: #357ABD;
+    }
+
+    .copy-btn {
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: #4A90E2;
+      font-size: 18px;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+    }
+
+    .copy-btn i {
+      margin-right: 6px;
+      font-size: 18px;
+    }
+
+    .copy-btn:hover {
+      text-decoration: underline;
+    }
+
+    #copyMessage {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-family: 'Roboto', sans-serif;
+      font-size: 16px;
+      z-index: 999;
+      display: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+
+    #copyMessage i {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>File Hash Calculator</h1>
+
+  <div class="drop-zone" id="dropZone">
+    Drag & Drop a file here or click to select
+    <input type="file" id="fileInput">
+  </div>
+
+  <div class="hash-container" id="hashOutput" style="display:none;">
+    <div class="hash-box" id="md5Box">
+      <div><strong>MD5:</strong><br><span id="md5"></span></div>
+      <button class="copy-btn" id="copyMd5"><i class="fa fa-clipboard"></i>Copy</button>
+    </div>
+    <div class="hash-box" id="sha1Box">
+      <div><strong>SHA1:</strong><br><span id="sha1"></span></div>
+      <button class="copy-btn" id="copySha1"><i class="fa fa-clipboard"></i>Copy</button>
+    </div>
+    <div class="hash-box" id="sha256Box">
+      <div><strong>SHA256:</strong><br><span id="sha256"></span></div>
+      <button class="copy-btn" id="copySha256"><i class="fa fa-clipboard"></i>Copy</button>
+    </div>
+    <div class="hash-box" id="sha512Box">
+      <div><strong>SHA512:</strong><br><span id="sha512"></span></div>
+      <button class="copy-btn" id="copySha512"><i class="fa fa-clipboard"></i>Copy</button>
+    </div>
+  </div>
+
+  <a href="#" class="button" id="copyButton" style="display:none;">Copy All Hashes</a>
+
+  <div id="copyMessage"><i class="fas fa-check-circle"></i>Copied!</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/spark-md5/3.0.2/spark-md5.min.js"></script>
+  <script>
+    window.addEventListener('load', () => {
+      const dropZone = document.getElementById('dropZone');
+      const fileInput = document.getElementById('fileInput');
+      const hashOutput = document.getElementById('hashOutput');
+      const copyButton = document.getElementById('copyButton');
+
+      dropZone.addEventListener('click', (e) => {
+        if (e.target === dropZone) {
+          fileInput.click();
+        }
+      });
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) processFile(file);
+      });
+
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (file) {
+          processFile(file);
+          fileInput.value = '';
+        }
+      });
+
+      async function processFile(file) {
+        try {
+          const buffer = await file.arrayBuffer();
+          const md5 = SparkMD5.ArrayBuffer.hash(buffer);
+          const sha1 = await digest("SHA-1", buffer);
+          const sha256 = await digest("SHA-256", buffer);
+          const sha512 = await digest("SHA-512", buffer);
+          showHashes({ md5, sha1, sha256, sha512 });
+        } catch (err) {
+          alert("Error processing file: " + err.message);
+        }
+      }
+
+      async function digest(algorithm, buffer) {
+        if (!window.crypto || !window.crypto.subtle) {
+          throw new Error("Web Crypto API is not supported in this browser or it's running in an insecure environment.");
+        }
+        const hashBuffer = await window.crypto.subtle.digest(algorithm, buffer);
+        return Array.from(new Uint8Array(hashBuffer))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('');
+      }
+
+      function showHashes(hashes) {
+        hashOutput.style.display = 'block';
+        document.getElementById('md5').innerText = hashes.md5;
+        document.getElementById('sha1').innerText = hashes.sha1;
+        document.getElementById('sha256').innerText = hashes.sha256;
+        document.getElementById('sha512').innerText = hashes.sha512;
+        copyButton.style.display = 'inline-block';
+      }
+
+      function copyToClipboard(hashId) {
+        const text = document.getElementById(hashId).innerText;
+        navigator.clipboard.writeText(text)
+          .then(() => showCopyMessage())
+          .catch((err) => alert("Failed to copy: " + err));
+      }
+
+      function showCopyMessage() {
+        const msg = document.getElementById('copyMessage');
+        msg.style.display = 'block';
+        msg.style.opacity = '1';
+        setTimeout(() => {
+          msg.style.transition = 'opacity 0.5s ease';
+          msg.style.opacity = '0';
+          setTimeout(() => msg.style.display = 'none', 500);
+        }, 2000);
+      }
+
+      document.getElementById('copyMd5').addEventListener('click', () => copyToClipboard('md5'));
+      document.getElementById('copySha1').addEventListener('click', () => copyToClipboard('sha1'));
+      document.getElementById('copySha256').addEventListener('click', () => copyToClipboard('sha256'));
+      document.getElementById('copySha512').addEventListener('click', () => copyToClipboard('sha512'));
+
+      copyButton.addEventListener('click', () => {
+        const hashesText = `
+MD5: ${document.getElementById('md5').innerText}
+SHA1: ${document.getElementById('sha1').innerText}
+SHA256: ${document.getElementById('sha256').innerText}
+SHA512: ${document.getElementById('sha512').innerText}
+        `;
+        navigator.clipboard.writeText(hashesText)
+          .then(() => showCopyMessage())
+          .catch((err) => alert("Failed to copy: " + err));
+      });
+    });
+  </script>
+</body>
+</html>
